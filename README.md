@@ -1,6 +1,6 @@
-# Interview Simulator — SIP Project (Gen AI)
+# Interview Simulator — SAP Project (Gen AI)
 
-No-setup web app for college SIP project on Generative AI.
+
 
 ## What it does
 - 4 role tracks (e.g. Software, Data, Marketing, HR) with 3 difficulty levels
