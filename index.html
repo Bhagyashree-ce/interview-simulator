@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <link rel="icon" href="data:," />
+  <title>Interview Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Literata:opsz,wght@7..72,500;7..72,650&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f3f6f4;
+      --surface: #ffffff;
+      --surface-2: #e8eeeb;
+      --ink: #10201a;
+      --muted: #52615a;
+      --line: #cfd9d3;
+      --brand: #0b6b4f;
+      --brand-deep: #064936;
+      --accent: #d8f653;
+      --accent-ink: #172300;
+      --warn: #a94825;
+      --shadow: 0 18px 55px rgba(25, 52, 41, .10);
+      --radius-lg: 28px;
+      --radius-md: 16px;
+      --radius-sm: 10px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1512;
+        --surface: #15201c;
+        --surface-2: #1e2b26;
+        --ink: #edf5f0;
+        --muted: #a9b9b0;
+        --line: #34443c;
+        --brand: #68d5ad;
+        --brand-deep: #86e3bf;
+        --accent: #d8f653;
+        --accent-ink: #172300;
+        --warn: #f19b79;
+        --shadow: 0 20px 60px rgba(0, 0, 0, .28);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; background: var(--bg); }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), color-mix(in srgb, var(--line) 45%, transparent) calc(100% - 1px)) 0 0 / 72px 72px,
+        var(--bg);
+      font-family: "IBM Plex Sans", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, select, textarea { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+    .app { width: min(1180px, calc(100% - 40px)); margin: 0 auto; padding: 34px 0 56px; }
+    .topline { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; }
+    .status-mark { display: inline-flex; align-items: center; gap: 10px; color: var(--muted); font-size: .9rem; font-weight: 600; }
+    .status-mark::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--brand); box-shadow: 0 0 0 5px color-mix(in srgb, var(--brand) 15%, transparent); }
+    .mode-note { color: var(--muted); font-size: .82rem; }
+    .view { display: none; }
+    .view.active { display: block; }
+    .setup-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(310px, .85fr); gap: clamp(28px, 7vw, 92px); align-items: center; min-height: calc(100vh - 155px); }
+    .eyebrow { color: var(--brand); font-weight: 700; font-size: .82rem; letter-spacing: .08em; text-transform: uppercase; margin: 0 0 14px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font: 650 clamp(3.1rem, 7vw, 6.3rem)/.94 "Literata", serif; letter-spacing: -.06em; max-width: 780px; margin-bottom: 24px; }
+    h1 span { color: var(--brand); }
+    .lede { font-size: clamp(1.02rem, 1.5vw, 1.2rem); line-height: 1.7; color: var(--muted); max-width: 620px; margin-bottom: 30px; }
+    .steps { display: flex; flex-wrap: wrap; gap: 10px 22px; padding: 0; margin: 0; list-style: none; color: var(--muted); font-size: .9rem; }
+    .steps li { display: flex; align-items: center; gap: 8px; }
+    .steps b { width: 24px; height: 24px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; font-size: .75rem; color: var(--ink); }
+    .setup-card { background: var(--surface); padding: 28px; box-shadow: var(--shadow); border-top: 5px solid var(--accent); border-radius: var(--radius-lg); }
+    .setup-card h2 { font-size: 1.2rem; margin-bottom: 5px; }
+    .setup-card > p { color: var(--muted); font-size: .9rem; margin-bottom: 24px; }
+    .field { margin-bottom: 20px; }
+    label { display: block; font-weight: 650; font-size: .86rem; margin-bottom: 8px; }
+    select, textarea {
+      width: 100%; border: 1px solid var(--line); color: var(--ink); background: var(--bg); border-radius: var(--radius-sm); outline: none; transition: border-color .2s, box-shadow .2s;
+    }
+    select { padding: 13px 42px 13px 14px; appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 18px) 54%, calc(100% - 13px) 54%; background-size: 5px 5px; background-repeat: no-repeat; }
+    select:focus, textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent); }
+    .level-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .level { position: relative; min-height: 42px; }
+    .level input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; appearance: none; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; }
+    .level span { position: relative; z-index: 1; display: block; text-align: center; padding: 11px 6px; color: var(--muted); pointer-events: none; font-size: .84rem; font-weight: 600; }
+    .level input:checked { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 10%, var(--surface)); }
+    .level input:checked + span { color: var(--brand-deep); }
+    .level input:focus-visible { outline: 3px solid color-mix(in srgb, var(--brand) 24%, transparent); outline-offset: 2px; }
+    .primary, .secondary, .text-btn { border: 0; cursor: pointer; }
+    .primary { width: 100%; padding: 14px 18px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); font-weight: 700; box-shadow: 0 5px 0 #a7be3f; transition: transform .15s, box-shadow .15s; }
+    .primary:hover { transform: translateY(-1px); box-shadow: 0 7px 0 #a7be3f; }
+    .primary:active { transform: translateY(3px); box-shadow: 0 2px 0 #a7be3f; }
+    .primary:disabled { opacity: .48; cursor: not-allowed; transform: none; box-shadow: none; }
+    .interview-shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 28px; align-items: start; }
+    .sidebar { position: sticky; top: 26px; }
+    .meta-card { padding: 20px; border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 82%, transparent); border-radius: var(--radius-md); }
+    .role-name { font-size: 1.05rem; font-weight: 700; margin-bottom: 3px; }
+    .difficulty { color: var(--muted); font-size: .84rem; margin-bottom: 22px; text-transform: capitalize; }
+    .progress-label { display: flex; justify-content: space-between; font-size: .78rem; color: var(--muted); margin-bottom: 8px; }
+    .progress { height: 7px; background: var(--surface-2); border-radius: 10px; overflow: hidden; }
+    .progress > span { display: block; height: 100%; background: var(--brand); width: 20%; transition: width .35s ease; }
+    .timer { margin-top: 20px; padding-top: 17px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; color: var(--muted); font-size: .84rem; }
+    .timer strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+    .question-card { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; }
+    .question-head { padding: clamp(24px, 4vw, 46px); padding-bottom: 28px; border-bottom: 1px solid var(--line); }
+    .question-count { color: var(--brand); font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 18px; }
+    .question-head h2 { font: 650 clamp(1.65rem, 4vw, 2.65rem)/1.22 "Literata", serif; letter-spacing: -.035em; max-width: 800px; margin-bottom: 17px; }
+    .why { color: var(--muted); font-size: .92rem; line-height: 1.6; margin: 0; max-width: 720px; }
+    .answer-area { padding: clamp(24px, 4vw, 46px); padding-top: 28px; }
+    textarea { resize: vertical; min-height: 220px; padding: 16px; line-height: 1.6; }
+    .answer-tools { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 13px; }
+    .word-count { color: var(--muted); font-size: .8rem; }
+    .answer-tools .primary { width: auto; min-width: 170px; }
+    .tip { margin: 22px 0 0; background: var(--surface-2); color: var(--muted); padding: 14px 16px; border-radius: var(--radius-sm); font-size: .86rem; line-height: 1.55; }
+    .tip strong { color: var(--ink); }
+    .feedback-panel { padding: 28px clamp(24px, 4vw, 46px) 38px; background: color-mix(in srgb, var(--brand) 7%, var(--surface)); border-top: 1px solid var(--line); display: none; }
+    .feedback-panel.show { display: block; }
+    .feedback-top { display: flex; align-items: center; gap: 17px; margin-bottom: 20px; }
+    .score-orb { flex: 0 0 auto; width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; background: var(--brand); color: var(--bg); font-size: 1.1rem; font-weight: 700; }
+    .feedback-top h3 { margin-bottom: 3px; font-size: 1.1rem; }
+    .feedback-top p { margin: 0; color: var(--muted); font-size: .84rem; }
+    .feedback-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    .signal { background: var(--surface); padding: 13px; border-radius: var(--radius-sm); border: 1px solid var(--line); }
+    .signal small { color: var(--muted); display: block; margin-bottom: 5px; }
+    .signal b { font-size: .9rem; }
+    .coach-note { margin: 0 0 20px; line-height: 1.65; color: var(--muted); font-size: .92rem; }
+    .feedback-actions { display: flex; justify-content: flex-end; }
+    .feedback-actions .primary { width: auto; min-width: 170px; }
+    .results { max-width: 920px; margin: 20px auto 0; }
+    .result-hero { background: var(--brand-deep); color: #f5fff9; padding: clamp(30px, 6vw, 60px); border-radius: var(--radius-lg); display: grid; grid-template-columns: 1fr auto; gap: 36px; align-items: end; }
+    .result-hero .eyebrow { color: var(--accent); }
+    .result-hero h1 { font-size: clamp(2.5rem, 6vw, 4.9rem); margin-bottom: 16px; color: #f5fff9; }
+    .result-hero p { max-width: 540px; color: #c8ded4; line-height: 1.65; margin: 0; }
+    .big-score { font: 650 clamp(4rem, 10vw, 7.2rem)/.8 "Literata", serif; letter-spacing: -.06em; color: var(--accent); text-align: right; }
+    .big-score span { display: block; font: 600 .82rem/1 "IBM Plex Sans", sans-serif; letter-spacing: .03em; color: #c8ded4; margin-top: 14px; text-transform: uppercase; }
+    .result-body { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    .result-card { background: var(--surface); padding: 25px; border-radius: var(--radius-md); border: 1px solid var(--line); }
+    .result-card h2 { font-size: 1rem; margin-bottom: 16px; }
+    .skill-row { display: grid; grid-template-columns: 110px 1fr 36px; gap: 12px; align-items: center; margin: 12px 0; font-size: .84rem; }
+    .skill-row > span:last-child { text-align: right; color: var(--muted); }
+    .skill-bar { height: 6px; border-radius: 6px; overflow: hidden; background: var(--surface-2); }
+    .skill-bar i { display: block; height: 100%; background: var(--brand); }
+    .next-list { padding: 0; margin: 0; list-style: none; display: grid; gap: 11px; }
+    .next-list li { display: grid; grid-template-columns: 24px 1fr; gap: 10px; color: var(--muted); font-size: .88rem; line-height: 1.5; }
+    .next-list b { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: .72rem; }
+    .result-actions { display: flex; justify-content: center; gap: 12px; margin-top: 22px; }
+    .result-actions .primary { width: auto; min-width: 170px; }
+    .secondary { padding: 14px 20px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 650; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (max-width: 800px) {
+      .app { width: min(100% - 24px, 620px); padding-top: 22px; }
+      .topline { margin-bottom: 25px; }
+      .mode-note { display: none; }
+      .setup-grid { grid-template-columns: 1fr; gap: 30px; min-height: 0; }
+      h1 { font-size: clamp(3rem, 15vw, 4.5rem); }
+      .steps { display: none; }
+      .setup-card { padding: 23px; border-radius: 22px; }
+      .interview-shell { grid-template-columns: 1fr; gap: 14px; }
+      .sidebar { position: static; }
+      .meta-card { display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; padding: 14px 16px; }
+      .difficulty { margin: 0; }
+      .progress-label, .progress { grid-column: 1 / -1; }
+      .timer { margin: 0; padding: 0; border: 0; grid-row: 1 / 3; grid-column: 2; display: block; text-align: right; }
+      .timer span { display: block; margin-bottom: 2px; }
+      .question-card { border-radius: 22px; }
+      .question-head { padding: 26px 22px 22px; }
+      .answer-area { padding: 22px; }
+      textarea { min-height: 190px; }
+      .answer-tools { align-items: stretch; flex-direction: column; }
+      .answer-tools .primary { width: 100%; }
+      .feedback-grid { grid-template-columns: 1fr; }
+      .feedback-actions .primary { width: 100%; }
+      .result-hero { grid-template-columns: 1fr; gap: 25px; padding: 30px 24px; }
+      .big-score { text-align: left; }
+      .result-body { grid-template-columns: 1fr; }
+      .result-actions { flex-direction: column; }
+      .result-actions .primary { width: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="topline">
+      <div class="status-mark">Practice room ready</div>
+      <div class="mode-note">5 questions · about 10 minutes</div>
+    </div>
+
+    <section id="setupView" class="view active" aria-labelledby="setupTitle">
+      <div class="setup-grid">
+        <div>
+          <p class="eyebrow">Mock interview practice</p>
+          <h1 id="setupTitle">Turn nerves into <span>good answers.</span></h1>
+          <p class="lede">Choose a role, answer five realistic questions, and get instant, explainable feedback on structure, detail, and role relevance.</p>
+          <ol class="steps" aria-label="How it works">
+            <li><b>1</b> Choose a track</li>
+            <li><b>2</b> Write your response</li>
+            <li><b>3</b> Review feedback</li>
+          </ol>
+        </div>
+        <form id="setupForm" class="setup-card">
+          <h2>Set up your interview</h2>
+          <p>You can restart with a different role anytime.</p>
+          <div class="field">
+            <label for="role">Target role</label>
+            <select id="role" required>
+              <option value="software">Software Developer</option>
+              <option value="data">Data Analyst</option>
+              <option value="marketing">Marketing Executive</option>
+              <option value="hr">HR Executive</option>
+            </select>
+          </div>
+          <fieldset class="field" style="border:0;padding:0;margin-left:0;margin-right:0">
+            <legend style="font-weight:650;font-size:.86rem;margin-bottom:8px">Difficulty</legend>
+            <div class="level-grid">
+              <label class="level"><input type="radio" name="level" value="beginner" checked><span>Beginner</span></label>
+              <label class="level"><input type="radio" name="level" value="intermediate"><span>Medium</span></label>
+              <label class="level"><input type="radio" name="level" value="advanced"><span>Advanced</span></label>
+            </div>
+          </fieldset>
+          <button class="primary" type="submit">Start interview</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="interviewView" class="view" aria-labelledby="questionTitle">
+      <div class="interview-shell">
+        <aside class="sidebar">
+          <div class="meta-card">
+            <div><div id="roleName" class="role-name">Software Developer</div><div id="levelName" class="difficulty">Beginner</div></div>
+            <div class="progress-label"><span id="progressText">Question 1 of 5</span><span id="progressPct">20%</span></div>
+            <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
+            <div class="timer"><span>Elapsed</span><strong id="timer">00:00</strong></div>
+          </div>
+        </aside>
+        <article class="question-card">
+          <div class="question-head">
+            <div id="questionCount" class="question-count">Question 01 · Behavioural</div>
+            <h2 id="questionTitle"></h2>
+            <p id="questionWhy" class="why"></p>
+          </div>
+          <div class="answer-area" id="answerArea">
+            <label for="answer">Your answer</label>
+            <textarea id="answer" placeholder="Write as if you were speaking to the interviewer…" maxlength="1800"></textarea>
+            <div class="answer-tools">
+              <span id="wordCount" class="word-count">0 words · aim for 60–150</span>
+              <button id="reviewBtn" class="primary" type="button" disabled>Review answer</button>
+            </div>
+            <p class="tip"><strong>Try STAR:</strong> briefly explain the situation, your task, the action you took, and the result.</p>
+          </div>
+          <div id="feedbackPanel" class="feedback-panel" aria-live="polite">
+            <div class="feedback-top">
+              <div id="answerScore" class="score-orb">0</div>
+              <div><h3 id="feedbackHeading">Good foundation</h3><p>Response quality signal, not a hiring decision</p></div>
+            </div>
+            <div class="feedback-grid">
+              <div class="signal"><small>Structure</small><b id="structureSignal">Needs work</b></div>
+              <div class="signal"><small>Specific detail</small><b id="detailSignal">Needs work</b></div>
+              <div class="signal"><small>Role relevance</small><b id="relevanceSignal">Needs work</b></div>
+            </div>
+            <p id="coachNote" class="coach-note"></p>
+            <div class="feedback-actions"><button id="nextBtn" class="primary" type="button">Next question</button></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="resultView" class="view results" aria-labelledby="resultTitle">
+      <div class="result-hero">
+        <div><p class="eyebrow">Practice complete</p><h1 id="resultTitle">You showed up. That matters.</h1><p id="resultSummary"></p></div>
+        <div id="finalScore" class="big-score">0<span>overall score</span></div>
+      </div>
+      <div class="result-body">
+        <section class="result-card" aria-labelledby="signalsTitle">
+          <h2 id="signalsTitle">Response signals</h2>
+          <div class="skill-row"><span>Structure</span><div class="skill-bar"><i id="structureBar"></i></div><span id="structurePct">0%</span></div>
+          <div class="skill-row"><span>Specific detail</span><div class="skill-bar"><i id="detailBar"></i></div><span id="detailPct">0%</span></div>
+          <div class="skill-row"><span>Role relevance</span><div class="skill-bar"><i id="relevanceBar"></i></div><span id="relevancePct">0%</span></div>
+        </section>
+        <section class="result-card" aria-labelledby="nextTitle">
+          <h2 id="nextTitle">For your next round</h2>
+          <ol id="recommendations" class="next-list"></ol>
+        </section>
+      </div>
+      <div class="result-actions">
+        <button id="restartBtn" class="secondary" type="button">Change role</button>
+        <button id="retryBtn" class="primary" type="button">Practice again</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var roles = {
+        software: {
+          name: "Software Developer",
+          keywords: ["code", "debug", "test", "team", "user", "performance", "design", "api", "database", "review"],
+          questions: [
+            ["Behavioural", "Tell me about a technical problem that was difficult to solve.", "The interviewer is looking for your reasoning process, not just the final fix."],
+            ["Technical", "How would you investigate an application that suddenly became slow?", "A strong answer uses a systematic diagnosis before suggesting a solution."],
+            ["Collaboration", "Describe a time you disagreed with a teammate about an implementation.", "This tests whether you can balance technical judgment with healthy teamwork."],
+            ["Product thinking", "How do you decide what to build when requirements are unclear?", "Good developers reduce ambiguity and connect decisions to user needs."],
+            ["Growth", "What is one engineering skill you are improving right now?", "Self-awareness and a concrete learning plan matter more than perfection."]
+          ]
+        },
+        data: {
+          name: "Data Analyst",
+          keywords: ["data", "metric", "sql", "dashboard", "trend", "stakeholder", "quality", "analysis", "business", "insight"],
+          questions: [
+            ["Behavioural", "Tell me about an analysis that changed a decision.", "Focus on the question, the evidence, and what happened after your recommendation."],
+            ["Technical", "How would you check whether a sudden spike in a dashboard is real?", "The interviewer wants to see validation, segmentation, and data-quality thinking."],
+            ["Communication", "Explain a complex finding to a non-technical stakeholder.", "A good analyst translates evidence into a clear decision, without jargon."],
+            ["Problem solving", "A campaign underperformed. How would you find out why?", "Strong answers form hypotheses and connect metrics to the customer journey."],
+            ["Growth", "Which analytical skill are you currently developing?", "Name a skill, how you practice it, and the impact you expect."]
+          ]
+        },
+        marketing: {
+          name: "Marketing Executive",
+          keywords: ["campaign", "audience", "brand", "content", "customer", "conversion", "channel", "metric", "research", "strategy"],
+          questions: [
+            ["Behavioural", "Tell me about a campaign or idea you are proud of.", "Connect your contribution to a measurable audience or business outcome."],
+            ["Strategy", "How would you launch a new product with a limited budget?", "The interviewer wants prioritisation, audience insight, and channel judgment."],
+            ["Problem solving", "What would you do if engagement dropped for three weeks?", "A strong response diagnoses the cause before changing the plan."],
+            ["Collaboration", "Describe a time you had to defend a creative decision.", "Show how you used evidence while staying open to feedback."],
+            ["Growth", "Which marketing trend is worth paying attention to, and why?", "Avoid buzzwords—explain the audience behaviour behind your choice."]
+          ]
+        },
+        hr: {
+          name: "HR Executive",
+          keywords: ["employee", "policy", "candidate", "manager", "confidential", "process", "communication", "culture", "feedback", "fair"],
+          questions: [
+            ["Behavioural", "Tell me about a sensitive people issue you handled carefully.", "Show judgment and process without revealing confidential information."],
+            ["Situational", "An employee says their manager treats them unfairly. What do you do first?", "The interviewer is testing neutrality, listening, and appropriate documentation."],
+            ["Operations", "How would you improve a slow hiring process?", "Balance candidate experience with quality, fairness, and stakeholder needs."],
+            ["Communication", "Describe a policy you had to explain to a resistant audience.", "Good HR communication combines clarity, empathy, and consistency."],
+            ["Growth", "What people-management topic are you learning about now?", "Connect your learning to how you would support employees or managers."]
+          ]
+        }
+      };
+
+      var state = { role: "software", level: "beginner", index: 0, scores: [], signals: [], seconds: 0, timerId: null };
+      var setupForm = document.getElementById("setupForm");
+      var answer = document.getElementById("answer");
+      var reviewBtn = document.getElementById("reviewBtn");
+      var nextBtn = document.getElementById("nextBtn");
+      var feedbackPanel = document.getElementById("feedbackPanel");
+
+      function showView(id) {
+        ["setupView", "interviewView", "resultView"].forEach(function (view) { document.getElementById(view).classList.toggle("active", view === id); });
+        window.scrollTo(0, 0);
+      }
+
+      function resetTimer() {
+        clearInterval(state.timerId);
+        state.seconds = 0;
+        document.getElementById("timer").textContent = "00:00";
+        state.timerId = setInterval(function () {
+          state.seconds += 1;
+          var m = String(Math.floor(state.seconds / 60)).padStart(2, "0");
+          var s = String(state.seconds % 60).padStart(2, "0");
+          document.getElementById("timer").textContent = m + ":" + s;
+        }, 1000);
+      }
+
+      function renderQuestion() {
+        var role = roles[state.role];
+        var q = role.questions[state.index];
+        var n = state.index + 1;
+        document.getElementById("roleName").textContent = role.name;
+        document.getElementById("levelName").textContent = state.level;
+        document.getElementById("questionCount").textContent = "Question " + String(n).padStart(2, "0") + " · " + q[0];
+        document.getElementById("questionTitle").textContent = q[1];
+        document.getElementById("questionWhy").textContent = q[2];
+        document.getElementById("progressText").textContent = "Question " + n + " of 5";
+        document.getElementById("progressPct").textContent = (n * 20) + "%";
+        document.getElementById("progressBar").style.width = (n * 20) + "%";
+        answer.value = "";
+        answer.disabled = false;
+        reviewBtn.disabled = true;
+        document.getElementById("wordCount").textContent = "0 words · aim for 60–150";
+        feedbackPanel.classList.remove("show");
+        document.getElementById("answerArea").style.display = "block";
+        nextBtn.textContent = n === 5 ? "See my results" : "Next question";
+        resetTimer();
+        setTimeout(function () { answer.focus(); }, 50);
+      }
+
+      function countWords(text) { return text.trim() ? text.trim().split(/\s+/).length : 0; }
+      function hasAny(text, words) { return words.some(function (word) { return text.indexOf(word) !== -1; }); }
+
+      function evaluate(text) {
+        var clean = text.toLowerCase();
+        var words = countWords(text);
+        var structureHits = ["situation", "task", "action", "result", "first", "then", "finally"].filter(function (x) { return clean.indexOf(x) !== -1; }).length;
+        var hasNumbers = /\b\d+(?:\.\d+)?%?\b/.test(clean);
+        var concrete = hasAny(clean, ["for example", "specifically", "because", "which led", "as a result", "improved", "reduced", "increased"]);
+        var relevanceHits = roles[state.role].keywords.filter(function (x) { return clean.indexOf(x) !== -1; }).length;
+        var structure = Math.min(100, 28 + Math.min(words, 100) * .35 + structureHits * 9);
+        var detail = Math.min(100, 25 + Math.min(words, 120) * .28 + (hasNumbers ? 18 : 0) + (concrete ? 17 : 0));
+        var relevance = Math.min(100, 28 + Math.min(words, 100) * .20 + relevanceHits * 11);
+        if (words < 25) { structure -= 12; detail -= 10; relevance -= 8; }
+        structure = Math.max(18, Math.round(structure));
+        detail = Math.max(18, Math.round(detail));
+        relevance = Math.max(18, Math.round(relevance));
+        var score = Math.round(structure * .36 + detail * .34 + relevance * .30);
+        return { score: score, structure: structure, detail: detail, relevance: relevance, words: words, hasNumbers: hasNumbers, structureHits: structureHits, relevanceHits: relevanceHits };
+      }
+
+      function signalLabel(value) { return value >= 76 ? "Strong" : value >= 55 ? "Developing" : "Needs work"; }
+
+      function reviewAnswer() {
+        var result = evaluate(answer.value);
+        state.scores.push(result.score);
+        state.signals.push(result);
+        clearInterval(state.timerId);
+        answer.disabled = true;
+        reviewBtn.disabled = true;
+        document.getElementById("answerScore").textContent = result.score;
+        document.getElementById("feedbackHeading").textContent = result.score >= 76 ? "Strong response" : result.score >= 55 ? "Good foundation" : "Build this out";
+        document.getElementById("structureSignal").textContent = signalLabel(result.structure);
+        document.getElementById("detailSignal").textContent = signalLabel(result.detail);
+        document.getElementById("relevanceSignal").textContent = signalLabel(result.relevance);
+        var notes = [];
+        if (result.words < 60) notes.push("Add enough context for the interviewer to follow your decision-making.");
+        else if (result.words > 150) notes.push("Tighten the opening so the most important action and result arrive sooner.");
+        else notes.push("Your answer is a useful interview length.");
+        if (result.structureHits < 2) notes.push("Make the sequence clearer: situation, action, then result.");
+        else notes.push("The response has a visible sequence, which makes it easier to follow.");
+        if (!result.hasNumbers) notes.push("If possible, add one number, timeframe, or measurable outcome.");
+        if (result.relevanceHits < 2) notes.push("Use one or two role-specific details to show how you work.");
+        document.getElementById("coachNote").textContent = notes.join(" ");
+        feedbackPanel.classList.add("show");
+        feedbackPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+
+      function average(key) {
+        return Math.round(state.signals.reduce(function (sum, item) { return sum + item[key]; }, 0) / state.signals.length);
+      }
+
+      function showResults() {
+        clearInterval(state.timerId);
+        var score = Math.round(state.scores.reduce(function (a, b) { return a + b; }, 0) / state.scores.length);
+        var structure = average("structure");
+        var detail = average("detail");
+        var relevance = average("relevance");
+        document.getElementById("finalScore").firstChild.nodeValue = score;
+        document.getElementById("resultSummary").textContent = "You completed five " + state.level + " questions for " + roles[state.role].name + ". Your strongest answers balanced a clear story with evidence and role-specific language.";
+        [["structure", structure], ["detail", detail], ["relevance", relevance]].forEach(function (item) {
+          document.getElementById(item[0] + "Bar").style.width = item[1] + "%";
+          document.getElementById(item[0] + "Pct").textContent = item[1] + "%";
+        });
+        var ranked = [{ key: "structure", value: structure }, { key: "detail", value: detail }, { key: "relevance", value: relevance }].sort(function (a, b) { return a.value - b.value; });
+        var advice = {
+          structure: "Use STAR to give each answer a beginning, a clear action, and an outcome.",
+          detail: "Prepare two examples with a timeframe, number, or observable result.",
+          relevance: "Mirror important role language naturally when explaining your choices."
+        };
+        var list = document.getElementById("recommendations");
+        list.innerHTML = "";
+        ranked.forEach(function (item, index) {
+          var li = document.createElement("li");
+          li.innerHTML = "<b>" + (index + 1) + "</b><span>" + advice[item.key] + "</span>";
+          list.appendChild(li);
+        });
+        showView("resultView");
+      }
+
+      setupForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        state.role = document.getElementById("role").value;
+        state.level = document.querySelector('input[name="level"]:checked').value;
+        state.index = 0; state.scores = []; state.signals = [];
+        showView("interviewView"); renderQuestion();
+      });
+
+      answer.addEventListener("input", function () {
+        var words = countWords(answer.value);
+        document.getElementById("wordCount").textContent = words + (words === 1 ? " word" : " words") + " · aim for 60–150";
+        reviewBtn.disabled = words < 8;
+      });
+      reviewBtn.addEventListener("click", reviewAnswer);
+      nextBtn.addEventListener("click", function () { if (state.index === 4) showResults(); else { state.index += 1; renderQuestion(); } });
+      document.getElementById("restartBtn").addEventListener("click", function () { clearInterval(state.timerId); showView("setupView"); });
+      document.getElementById("retryBtn").addEventListener("click", function () { state.index = 0; state.scores = []; state.signals = []; showView("interviewView"); renderQuestion(); });
+    })();
+  </script>
+</body>
+</html>
